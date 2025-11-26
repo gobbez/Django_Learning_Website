@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Forms in Django</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <header>
+        <h1>Benvenuti nel Mondo di Django</h1>
+        <nav>
+            <a href="index.html">Home</a>
+            <a href="introduzione.html">Introduzione</a>
+            <a href="setup.html">Setup</a>
+            <a href="primo-progetto.html">Primo Progetto</a>
+            <a href="models.html">Models</a>
+            <a href="views.html">Views</a>
+            <a href="templates.html">Templates</a>
+            <a href="forms.html">Forms</a>
+            <a href="admin.html">Admin</a>
+            <a href="auth.html">Autenticazione</a>
+            <a href="middleware.html">Middleware</a>
+        </nav>
+    </header>
+    <main>
+        <section class="content">
+            <h2>Gestione Avanzata dei Forms in Django</h2>
+            <p>Nel mondo delle web application moderne, la gestione dell'input utente diventa cruciale. Django offre un sistema robusto per creare, validare e processare forms, integrandosi perfettamente con models e templates.</p>
+
+            <h3>Form Classi Personalizzate</h3>
+            <p>Oltre ai ModelForm, Django permette di creare form completamente personalizzati per input complessi:</p>
+            <div class="code-block">
+                <pre>
+from django import forms
+from django.core.validators import RegexValidator
+
+class ContactForm(forms.Form):
+    name = forms.CharField(
+        max_length=100,
+        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Il tuo nome'})
+    )
+    email = forms.EmailField(
+        required=True,
+        widget=forms.EmailInput(attrs={'class': 'form-control'})
+    )
+    phone_regex = RegexValidator(regex=r'^\+?1?\d{9,15}$', message="Formato telefono: '+999999999'")
+    phone = forms.CharField(
+        validators=[phone_regex],
+        required=False,
+        widget=forms.TextInput(attrs={'placeholder': '+391234567890'})
+    )
+    message = forms.CharField(
+        widget=forms.Textarea(attrs={'rows': 4, 'cols': 50, 'class': 'form-control'}),
+        help_text="Scrivi il tuo messaggio qui"
+    )
+    newsletter = forms.BooleanField(
+        required=False,
+        label="Iscriviti alla newsletter"
+    )
+    priority = forms.ChoiceField(
+        choices=[('low', 'Bassa'), ('medium', 'Media'), ('high', 'Alta')],
+        initial='medium',
+        widget=forms.RadioSelect
+    )
+                </pre>
+            </div>
+
+            <h3>Validazione Avanzata</h3>
+            <p>Django permette validazioni personalizzate per garantire l'integrità dei dati:</p>
+            <div class="code-block">
+                <pre>
+class ContactForm(forms.Form):
+    # ... campi precedenti ...
+
+    def clean_email(self):
+        email = self.cleaned_data.get('email')
+        if email and email.endswith('@spamdomain.com'):
+            raise forms.ValidationError("Questo dominio non è accettato")
+        return email
+
+    def clean(self):
+        cleaned_data = super().clean()
+        name = cleaned_data.get('name')
+        email = cleaned_data.get('email')
+
+        if name and email:
+            # Controlla se nome e email sono già stati usati insieme
+            if SomeModel.objects.filter(name=name, email=email).exists():
+                raise forms.ValidationError("Questa combinazione nome/email è già registrata")
+
+        return cleaned_data
+                </pre>
+            </div>
+
+            <h3>Formsets per Input Multipli</h3>
+            <p>Quando abbiamo bisogno di gestire più istanze dello stesso form:</p>
+            <div class="code-block">
+                <pre>
+from django.forms import modelformset_factory
+
+# Per gestire più istanze di un model
+PostFormSet = modelformset_factory(Post, fields=['title', 'content'], extra=2, can_delete=True)
+
+def manage_posts(request):
+    PostFormSet = modelformset_factory(Post, fields=['title', 'content'], extra=1, can_delete=True)
+
+    if request.method == 'POST':
+        formset = PostFormSet(request.POST)
+        if formset.is_valid():
+            formset.save()
+            return redirect('post_list')
+    else:
+        formset = PostFormSet()
+
+    return render(request, 'blog/manage_posts.html', {'formset': formset})
+                </pre>
+            </div>
+
+            <h3>Integrazione con AJAX</h3>
+            <p>Form asincroni per migliorare l'esperienza utente:</p>
+            <div class="code-block">
+                <pre>
+def ajax_contact_view(request):
+    if request.method == 'POST' and request.is_ajax():
+        form = ContactForm(request.POST)
+        if form.is_valid():
+            # Processa il form
+            form.save()
+            return JsonResponse({'success': True, 'message': 'Messaggio inviato!'})
+        else:
+            return JsonResponse({'success': False, 'errors': form.errors})
+    return JsonResponse({'success': False, 'message': 'Richiesta non valida'})
+                </pre>
+            </div>
+
+            <p>Questa gestione avanzata dei forms trasforma Django da semplice framework a strumento professionale per applicazioni web complesse.</p>
+            <a href="admin.html" class="next-link">Scopri l'Admin Interface</a>
+        </section>
+    </main>
+    <footer>
+        <p>&copy; 2025 Sito Educativo su Django</p>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Interface in Django</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <header>
+        <h1>Benvenuti nel Mondo di Django</h1>
+        <nav>
+            <a href="index.html">Home</a>
+            <a href="introduzione.html">Introduzione</a>
+            <a href="setup.html">Setup</a>
+            <a href="primo-progetto.html">Primo Progetto</a>
+            <a href="models.html">Models</a>
+            <a href="views.html">Views</a>
+            <a href="templates.html">Templates</a>
+            <a href="forms.html">Forms</a>
+            <a href="admin.html">Admin</a>
+            <a href="auth.html">Autenticazione</a>
+            <a href="middleware.html">Middleware</a>
+        </nav>
+    </header>
+    <main>
+        <section class="content">
+            <h2>L'Admin Interface di Django: Potenza e Personalizzazione</h2>
+            <p>L'admin interface di Django è uno degli strumenti più potenti del framework. Automaticamente generata dal modello dei dati, offre un pannello di controllo completo che può essere esteso per creare interfacce amministrative sofisticate.</p>
+
+            <h3>Registrazione dei Models nell'Admin</h3>
+            <p>Dopo aver creato i models, registrandoli nell'admin si ottiene automaticamente un'interfaccia CRUD:</p>
+            <div class="code-block">
+                <pre>
+from django.contrib import admin
+from .models import Post, Category, Comment
+
+# Registrazione semplice
+admin.site.register(Post)
+admin.site.register(Category)
+admin.site.register(Comment)
+                </pre>
+            </div>
+
+            <h3>Admin Classi Personalizzate</h3>
+            <p>Per controllare esattamente cosa appare nell'interfaccia admin:</p>
+            <div class="code-block">
+                <pre>
+@admin.register(Post)
+class PostAdmin(admin.ModelAdmin):
+    # Campi da mostrare nella lista
+    list_display = ('title', 'author', 'published_date', 'status', 'category')
+    # Campi cliccabili per andare al dettaglio
+    list_display_links = ('title',)
+    # Filtri laterali
+    list_filter = ('status', 'category', 'author', 'published_date')
+    # Ricerca
+    search_fields = ('title', 'content', 'author__username')
+    # Ordinamento predefinito
+    ordering = ('-published_date',)
+    # Numero di elementi per pagina
+    list_per_page = 25
+
+    # Raggruppamento dei campi nel form
+    fieldsets = (
+        ('Informazioni Base', {
+            'fields': ('title', 'slug', 'author')
+        }),
+        ('Contenuto', {
+            'fields': ('content', 'excerpt', 'featured_image'),
+            'classes': ('collapse',)
+        }),
+        ('Pubblicazione', {
+            'fields': ('status', 'published_date', 'category', 'tags'),
+            'classes': ('wide',)
+        }),
+    )
+
+    # Campi in linea (inline) per relazioni
+    inlines = [CommentInline]
+
+class CommentInline(admin.TabularInline):
+    model = Comment
+    extra = 0
+    readonly_fields = ('created_date',)
+    can_delete = True
+                </pre>
+            </div>
+
+            <h3>Azioni Personalizzate nell'Admin</h3>
+            <p>Aggiungere funzionalità custom alle azioni bulk:</p>
+            <div class="code-block">
+                <pre>
+@admin.register(Post)
+class PostAdmin(admin.ModelAdmin):
+    # ... campi precedenti ...
+
+    actions = ['publish_posts', 'unpublish_posts', 'export_selected']
+
+    def publish_posts(self, request, queryset):
+        """Pubblica tutti i post selezionati"""
+        updated = queryset.update(status='published')
+        self.message_user(request, f'{updated} post pubblicati con successo.')
+    publish_posts.short_description = "Pubblica i post selezionati"
+
+    def unpublish_posts(self, request, queryset):
+        """Rimuove pubblicazione ai post selezionati"""
+        updated = queryset.update(status='draft')
+        self.message_user(request, f'{updated} post spostati in bozza.')
+    unpublish_posts.short_description = "Sposta in bozza i post selezionati"
+
+    def export_selected(self, request, queryset):
+        """Esporta i post selezionati in CSV"""
+        import csv
+        from django.http import HttpResponse
+
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = 'attachment; filename="posts.csv"'
+
+        writer = csv.writer(response)
+        writer.writerow(['Title', 'Author', 'Status', 'Published Date'])
+
+        for post in queryset:
+            writer.writerow([post.title, post.author, post.status, post.published_date])
+
+        return response
+    export_selected.short_description = "Esporta in CSV"
+                </pre>
+            </div>
+
+            <h3>Personalizzazione dell'Admin Site</h3>
+            <p>Modificare l'aspetto globale dell'interfaccia admin:</p>
+            <div class="code-block">
+                <pre>
+# Nel file admin.py dell'app principale
+from django.contrib import admin
+from django.contrib.admin import AdminSite
+from django.utils.translation import gettext_lazy as _
+
+class MyAdminSite(AdminSite):
+    site_header = _("Amministrazione Blog Pro")
+    site_title = _("Blog Pro Admin")
+    index_title = _("Pannello di Amministrazione")
+    site_url = "/blog/"
+
+    def get_app_list(self, request):
+        """Riordina e raggruppa le app nell'admin index"""
+        app_list = super().get_app_list(request)
+        # Logica personalizzata per riordinare le app
+        return sorted(app_list, key=lambda x: x['name'])
+
+# Crea istanza personalizzata
+admin_site = MyAdminSite(name='myadmin')
+
+# Registra models con admin personalizzato
+admin_site.register(Post, PostAdmin)
+
+# Nel urls.py principale
+from .admin import admin_site
+
+urlpatterns = [
+    path('myadmin/', admin_site.urls),
+]
+                </pre>
+            </div>
+
+            <h3>Admin Interface per Utenti Non-Staff</h3>
+            <p>Permettere agli utenti normali di modificare solo i propri contenuti:</p>
+            <div class="code-block">
+                <pre>
+class AuthorPostAdmin(admin.ModelAdmin):
+    def get_queryset(self, request):
+        """Mostra solo i post dell'autore corrente"""
+        qs = super().get_queryset(request)
+        if request.user.is_superuser:
+            return qs
+        return qs.filter(author=request.user)
+
+    def get_form(self, request, obj=None, **kwargs):
+        """Imposta automaticamente l'autore per i nuovi post"""
+        form = super().get_form(request, obj, **kwargs)
+        if not request.user.is_superuser and obj is None:
+            form.base_fields['author'].initial = request.user
+            form.base_fields['author'].disabled = True
+        return form
+
+# Registrazione per utenti normali
+admin.site.register(Post, AuthorPostAdmin)
+                </pre>
+            </div>
+
+            <p>L'admin interface di Django trasforma la gestione dei dati da un compito tedioso a un'esperienza intuitiva e potente, essenziale per progetti Django enterprise-level.</p>
+            <a href="auth.html" class="next-link">Approfondisci l'Autenticazione</a>
+        </section>
+    </main>
+    <footer>
+        <p>&copy; 2025 Sito Educativo su Django</p>
+    </footer>
+</body>
+</html>

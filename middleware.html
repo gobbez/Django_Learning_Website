@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Middleware in Django</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <header>
+        <h1>Benvenuti nel Mondo di Django</h1>
+        <nav>
+            <a href="index.html">Home</a>
+            <a href="introduzione.html">Introduzione</a>
+            <a href="setup.html">Setup</a>
+            <a href="primo-progetto.html">Primo Progetto</a>
+            <a href="models.html">Models</a>
+            <a href="views.html">Views</a>
+            <a href="templates.html">Templates</a>
+            <a href="forms.html">Forms</a>
+            <a href="admin.html">Admin</a>
+            <a href="auth.html">Autenticazione</a>
+            <a href="middleware.html">Middleware</a>
+        </nav>
+    </header>
+    <main>
+        <section class="content">
+            <h2>Middleware: Il Cuore dell'Architettura Django</h2>
+            <p>Il middleware rappresenta il livello più profondo e potente di Django. Questi componenti intercettano ogni richiesta HTTP e risposta, permettendo di implementare funzionalità trasversali come sicurezza, caching, logging e manipolazione globale delle richieste.</p>
+
+            <h3>Processo di Esecuzione del Middleware</h3>
+            <p>Il middleware viene eseguito in ordine specifico sia per le richieste che per le risposte:</p>
+            <div class="code-block">
+                <pre>
+# Ordine di esecuzione richiesta:
+# 1. SecurityMiddleware
+# 2. SessionMiddleware
+# 3. CommonMiddleware
+# 4. CsrfViewMiddleware
+# 5. AuthenticationMiddleware
+# 6. MessageMiddleware
+# 7. Other middleware...
+# 8. View processing
+# Risposta in ordine inverso
+                </pre>
+            </div>
+
+            <h3>Creazione di Middleware Personalizzato</h3>
+            <p>La struttura base per implementare middleware custom:</p>
+            <div class="code-block">
+                <pre>
+# middleware.py
+class RequestTimingMiddleware:
+    """Middleware per tracciare il tempo di esecuzione delle richieste"""
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+        # Configurazione una tantum
+
+    def __call__(self, request):
+        # Codice eseguito per ogni richiesta prima della view
+        import time
+        start_time = time.time()
+        request.start_time = start_time
+
+        # Processa la richiesta attraverso la catena di middleware
+        response = self.get_response(request)
+
+        # Codice eseguito per ogni risposta dopo la view
+        duration = time.time() - start_time
+
+        # Aggiungi header con timing
+        response['X-Request-Duration'] = str(duration)
+
+        # Log richieste lente
+        if duration > 1.0:  # Più di 1 secondo
+            import logging
+            logger = logging.getLogger('performance')
+            logger.warning(f"Richista lenta: {request.path} - {duration:.2f}s")
+
+        return response
+
+class RequestLoggingMiddleware:
+    """Middleware per logging dettagliato delle richieste"""
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        # Log della richiesta
+        import logging
+        logger = logging.getLogger('requests')
+
+        logger.info(f"{request.method} {request.path} - User: {request.user.username if request.user.is_authenticated else 'Anonymous'} - IP: {self.get_client_ip(request)}")
+
+        response = self.get_response(request)
+
+        logger.info(f"Response: {response.status_code} - Content-Type: {response.get('Content-Type', 'N/A')}")
+
+        return response
+
+    def get_client_ip(self, request):
+        """Ottieni IP reale del client considerando proxy"""
+        x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+        if x_forwarded_for:
+            ip = x_forwarded_for.split(',')[0]
+        else:
+            ip = request.META.get('REMOTE_ADDR')
+        return ip
+                </pre>
+            </div>
+
+            <h3>Middleware per Sicurezza Avanzata</h3>
+            <p>Middleware specializzati per proteggere l'applicazione:</p>
+            <div class="code-block">
+                <pre>
+class SecurityHeadersMiddleware:
+    """Aggiunge headers di sicurezza alle risposte"""
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        response = self.get_response(request)
+
+        # Headers di sicurezza standard
+        response['X-Content-Type-Options'] = 'nosniff'
+        response['X-Frame-Options'] = 'DENY'
+        response['X-XSS-Protection'] = '1; mode=block'
+        response['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
+        response['Content-Security-Policy'] = "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'"
+
+        return response
+
+class RateLimitingMiddleware:
+    """Implementa rate limiting per prevenire abusi"""
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+        self.requests = {}  # In produzione usa Redis o database
+
+    def __call__(self, request):
+        import time
+
+        client_ip = self.get_client_ip(request)
+        current_time = time.time()
+
+        # Rate limit: 100 richieste per minuto per IP
+        time_window = 60
+        max_requests = 100
+
+        if client_ip not in self.requests:
+            self.requests[client_ip] = []
+
+        # Rimuovi richieste vecchie dalla finestra
+        self.requests[client_ip] = [
+            req_time for req_time in self.requests[client_ip]
+            if current_time - req_time < time_window
+        ]
+
+        if len(self.requests[client_ip]) >= max_requests:
+            from django.http import HttpResponseTooManyRequests
+            return HttpResponseTooManyRequests("Rate limit exceeded")
+
+        self.requests[client_ip].append(current_time)
+
+        return self.get_response(request)
+
+    def get_client_ip(self, request):
+        x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+        if x_forwarded_for:
+            ip = x_forwarded_for.split(',')[0]
+        else:
+            ip = request.META.get('REMOTE_ADDR')
+        return ip
+                </pre>
+            </div>
+
+            <h3>Middleware basato su Classe</h3>
+            <p>Per middleware più complessi con metodi specifici:</p>
+            <div class="code-block">
+                <pre>
+from django.utils.deprecation import MiddlewareMixin
+
+class AdvancedMiddleware(MiddlewareMixin):
+    """Middleware avanzato con tutti i ganci disponibili"""
+
+    def process_request(self, request):
+        """Chiamato prima della view"""
+        print(f"Processing request: {request.path}")
+        return None  # Continua elaborazione
+
+    def process_view(self, request, view_func, view_args, view_kwargs):
+        """Chiamato dopo routing ma prima della view"""
+        print(f"View function: {view_func.__name__}")
+        return None
+
+    def process_template_response(self, request, response):
+        """Chiamato se la response ha un template"""
+        if hasattr(response, 'template_name'):
+            print(f"Template: {response.template_name}")
+        return response
+
+    def process_response(self, request, response):
+        """Chiamato sempre alla fine"""
+        print(f"Response status: {response.status_code}")
+        return response
+
+    def process_exception(self, request, exception):
+        """Chiamato solo in caso di eccezione non gestita"""
+        import logging
+        logger = logging.getLogger('errors')
+        logger.error(f"Unhandled exception: {exception}", exc_info=True)
+        return None  # Lascia che altri middleware gestiscano l'errore
+                </pre>
+            </div>
+
+            <h3>Middleware per Caching Selektivo</h3>
+            <p>Implementazione di caching intelligente basata sul contenuto:</p>
+            <div class="code-block">
+                <pre>
+class SmartCachingMiddleware:
+    """Middleware che cache automaticamente risposte GET"""
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+        self.cache = {}  # In produzione usa Redis
+
+    def __call__(self, request):
+        if request.method == 'GET' and not request.user.is_authenticated:
+            # Crea chiave cache basata su path e query params
+            cache_key = f"{request.path}?{request.GET.urlencode()}"
+            cache_key = cache_key.rstrip('?')  # Rimuovi ? se non ci sono params
+
+            if cache_key in self.cache:
+                cached_response = self.cache[cache_key]
+                # Verifica se cache non scaduta
+                if time.time() - cached_response['timestamp'] < 300:  # 5 minuti
+                    return cached_response['response']
+
+            response = self.get_response(request)
+
+            # Cache solo risposte di successo
+            if response.status_code == 200:
+                self.cache[cache_key] = {
+                    'response': response,
+                    'timestamp': time.time()
+                }
+
+            return response
+        else:
+            return self.get_response(request)
+                </pre>
+            </div>
+
+            <h3>Middleware per Gestione degli Errori</h3>
+            <p>Middleware che gestisce errori e fornisce pagine di errore custom:</p>
+            <div class="code-block">
+                <pre>
+class ErrorHandlingMiddleware:
+    """Middleware per gestione centralizzata degli errori"""
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        try:
+            response = self.get_response(request)
+            return response
+        except Exception as e:
+            return self.handle_exception(request, e)
+
+    def handle_exception(self, request, exception):
+        """Gestione centralizzata delle eccezioni"""
+        import logging
+        logger = logging.getLogger('errors')
+        logger.error(f"Exception in {request.path}: {exception}", exc_info=True)
+
+        from django.http import JsonResponse
+        from django.shortcuts import render
+
+        if request.is_ajax():
+            return JsonResponse({
+                'error': 'Si è verificato un errore interno del server',
+                'status': 500
+            }, status=500)
+        else:
+            return render(request, 'errors/500.html', {
+                'exception': str(exception),
+                'path': request.path
+            }, status=500)
+            </pre>
+            </div>
+
+            <p>Il middleware è lo strumento più potente per estendere Django. Permette di implementare funzionalità trasversali che influenzano ogni richiesta, rendendo possibile creare applicazioni enterprise-level con caratteristiche avanzate di sicurezza, performance e monitoraggio.</p>
+            <a href="index.html" class="next-link">Torna alla Home e Rivedi il Viaggio</a>
+        </section>
+    </main>
+    <footer>
+        <p>&copy; 2025 Sito Educativo su Django</p>
+    </footer>
+</body>
+</html>
