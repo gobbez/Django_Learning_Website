@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Models in Django</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <header>
+        <h1>Benvenuti nel Mondo di Django</h1>
+        <nav>
+            <a href="index.html">Home</a>
+            <a href="introduzione.html">Introduzione</a>
+            <a href="setup.html">Setup</a>
+            <a href="primo-progetto.html">Primo Progetto</a>
+            <a href="models.html">Models</a>
+            <a href="views.html">Views</a>
+            <a href="templates.html">Templates</a>
+        </nav>
+    </header>
+    <main>
+        <section class="content">
+            <h2>Capire i Models in Django</h2>
+            <p>I Models definiti in Django sono il singolo, definitivo fonte di verità sulla tua informazione. Contengono i campi essenziali e comportamenti dei dati che stai memorizzando.</p>
+            <p>L'ORM di Django fornisce un modo elegante per creare una "migrazione di database" senza scrivere SQL.</p>
+            <h3>Definire un Model</h3>
+            <p>Nel file models.py della tua app, puoi definire i tuoi modelli:</p>
+            <div class="code-block">
+                <pre>
+from django.db import models
+
+class Post(models.Model):
+    title = models.CharField(max_length=200)
+    content = models.TextField()
+    published_date = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.title
+                </pre>
+            </div>
+            <p>Questo model rappresenta un post del blog con titolo, contenuto e data di pubblicazione.</p>
+            <h3>Migrazione del Database</h3>
+            <p>Dopo aver creato il model, esegui:</p>
+            <div class="code-block">
+                <pre>
+python manage.py makemigrations
+python manage.py migrate
+                </pre>
+            </div>
+            <p>Questo crea e applica le modifiche al database.</p>
+            <a href="views.html" class="next-link">Approfondisci le Views</a>
+        </section>
+    </main>
+    <footer>
+        <p>&copy; 2025 Sito Educativo su Django</p>
+    </footer>
+</body>
+</html>

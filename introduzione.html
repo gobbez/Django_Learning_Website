@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Introduzione a Django - Scopri Django</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <header>
+        <h1>Benvenuti nel Mondo di Django</h1>
+        <nav>
+            <a href="index.html">Home</a>
+            <a href="introduzione.html">Introduzione</a>
+            <a href="setup.html">Setup</a>
+            <a href="primo-progetto.html">Primo Progetto</a>
+            <a href="models.html">Models</a>
+            <a href="views.html">Views</a>
+            <a href="templates.html">Templates</a>
+        </nav>
+    </header>
+    <main>
+        <section class="content">
+            <h2>Che cos'è Django?</h2>
+            <p>Django è un framework web open-source scritto in Python. È progettato per facilitare lo sviluppo rapido di applicazioni web sicure e mantenibili. Django segue il principio del "batterie incluse", fornendo tutti gli strumenti necessari per costruire applicazioni web moderne senza dover reinventare la ruota.</p>
+            <p>Alcune caratteristiche principali di Django includono:</p>
+            <ul>
+                <li><strong>ORM potente:</strong> Una mappatura oggetto-relazionale che permette di lavorare con database utilizzando oggetti Python.</li>
+                <li><strong>Sistema di template:</strong> Un motore di template flessibile per generare dinamicamente contenuti HTML.</li>
+                <li><strong>Sistema di routing URL:</strong> Una configurazione intuitiva per mappare URL alle viste.</li>
+                <li><strong>Sicurezza integrata:</strong> Protezioni incorporate contro vulnerabilità comuni come SQL injection e XSS.</li>
+            </ul>
+            <h3>Un esempio semplice di vista in Django</h3>
+            <div class="code-block">
+                <pre>
+from django.http import HttpResponse
+
+def hello_world(request):
+    return HttpResponse("Ciao, mondo!")
+                </pre>
+            </div>
+            <p>Questa funzione semplice restituisce una risposta HTTP con il testo "Ciao, mondo!". Questo è un esempio basilare di una vista in Django.</p>
+            <a href="setup.html" class="next-link">Vai al Setup e Installazione</a>
+        </section>
+    </main>
+    <footer>
+        <p>&copy; 2025 Sito Educativo su Django</p>
+    </footer>
+</body>
+</html>

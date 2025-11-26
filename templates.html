@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Templates in Django</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <header>
+        <h1>Benvenuti nel Mondo di Django</h1>
+        <nav>
+            <a href="index.html">Home</a>
+            <a href="introduzione.html">Introduzione</a>
+            <a href="setup.html">Setup</a>
+            <a href="primo-progetto.html">Primo Progetto</a>
+            <a href="models.html">Models</a>
+            <a href="views.html">Views</a>
+            <a href="templates.html">Templates</a>
+        </nav>
+    </header>
+    <main>
+        <section class="content">
+            <h2>Masterizzare i Templates in Django</h2>
+            <p>I templates in Django sono il modo per separare la presentazione del documento dalla logica di business. Un template contiene la struttura statica di un documento HTML insieme ai tag speciali che descrivono come il documento verrà popolato dinamicamente.</p>
+            <p>Django ha il suo sistema di template con caratteristiche potenti per il riutilizzo del codice.</p>
+            <h3>Variabili</h3>
+            <p>Le variabili vengono circondate da {{ e }}. Esempio: {{ variable }}</p>
+            <h3>Tags</h3>
+            <p>I tag forniscono logica nei templates. Alcuni comuni: {% if %}, {% for %}, {% block %}</p>
+            <h3>Filtri</h3>
+            <p>I filtri cambiano come una variabile viene visualizzata. Esempio: {{ value|date:"D d M Y" }}</p>
+            <h3>Esempio di Template</h3>
+            <p>Un template semplice per mostrare una lista di post:</p>
+            <div class="code-block">
+                <pre>
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Blog</title>
+</head>
+<body>
+    <h1>{{ title }}</h1>
+    {% for post in posts %}
+        <div class="post">
+            <h2>{{ post.title }}</h2>
+            <p>{{ post.content|truncatewords:20 }}</p>
+            <small>Pubblicata il {{ post.published_date|date:"d M Y" }}</small>
+        </div>
+    {% empty %}
+        <p>Nessun post trovato.</p>
+    {% endfor %}
+</body>
+</html>
+                </pre>
+            </div>
+            <p>Questo template dimostra l'uso di variabili, cicli, filtri e tag condizionali.</p>
+            <p>Ora hai le basi per costruire applicazioni Django complete! Torna alla home per rivedere i concetti.</p>
+            <a href="index.html" class="next-link">Torna alla Home</a>
+        </section>
+    </main>
+    <footer>
+        <p>&copy; 2025 Sito Educativo su Django</p>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Views in Django</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <header>
+        <h1>Benvenuti nel Mondo di Django</h1>
+        <nav>
+            <a href="index.html">Home</a>
+            <a href="introduzione.html">Introduzione</a>
+            <a href="setup.html">Setup</a>
+            <a href="primo-progetto.html">Primo Progetto</a>
+            <a href="models.html">Models</a>
+            <a href="views.html">Views</a>
+            <a href="templates.html">Templates</a>
+        </nav>
+    </header>
+    <main>
+        <section class="content">
+            <h2>Comprendere le Views in Django</h2>
+            <p>Una view è un "tipo" di pagina web della tua app Django che generalmente serve una funzione specifica e ha un template specifico.</p>
+            <p>In Django, le views possono essere basate su funzioni o classi. Le function-based views sono più semplici per compiti specifici, mentre le class-based views offrono maggiore flessibilità per compiti più complessi.</p>
+            <h3>Function-Based View</h3>
+            <p>Nel file views.py della tua app:</p>
+            <div class="code-block">
+                <pre>
+from django.shortcuts import render
+from .models import Post
+
+def post_list(request):
+    posts = Post.objects.order_by('-published_date')
+    return render(request, 'blog/post_list.html', {'posts': posts})
+                </pre>
+            </div>
+            <h3>Class-Based View</h3>
+            <p> alternativa alle function-based views:</p>
+            <div class="code-block">
+                <pre>
+from django.views.generic import ListView
+from .models import Post
+
+class PostListView(ListView):
+    model = Post
+    template_name = 'blog/post_list.html'
+    context_object_name = 'posts'
+    ordering = ['-published_date']
+                </pre>
+            </div>
+            <h3>URL Patterns</h3>
+            <p>Nel file urls.py, collega la view a un URL:</p>
+            <div class="code-block">
+                <pre>
+from django.urls import path
+from . import views
+
+urlpatterns = [
+    path('', views.post_list, name='post_list'),
+    path('class/', views.PostListView.as_view(), name='post_list_class'),
+]
+                </pre>
+            </div>
+            <p>Ora le tue views sono collegate agli URL e possono essere visualizzate nel browser.</p>
+            <a href="templates.html" class="next-link">Esplora i Templates</a>
+        </section>
+    </main>
+    <footer>
+        <p>&copy; 2025 Sito Educativo su Django</p>
+    </footer>
+</body>
+</html>

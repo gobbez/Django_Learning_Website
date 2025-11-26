@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Primo Progetto Django</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <header>
+        <h1>Benvenuti nel Mondo di Django</h1>
+        <nav>
+            <a href="index.html">Home</a>
+            <a href="introduzione.html">Introduzione</a>
+            <a href="setup.html">Setup</a>
+            <a href="primo-progetto.html">Primo Progetto</a>
+            <a href="models.html">Models</a>
+            <a href="views.html">Views</a>
+            <a href="templates.html">Templates</a>
+        </nav>
+    </header>
+    <main>
+        <section class="content">
+            <h2>Creazione del Primo Progetto Django</h2>
+            <p>Ora che Django è installato, creiamo il nostro primo progetto. Un progetto Django è una collezione di configurazioni per un'istanza di Django, inclusi database e opzioni.</p>
+            <h3>Creare un nuovo progetto</h3>
+            <div class="code-block">
+                <pre>
+django-admin startproject myproject
+cd myproject
+                </pre>
+            </div>
+            <p>Questo crea una struttura di directory per il progetto.</p>
+            <h3>Avviare il server di sviluppo</h3>
+            <div class="code-block">
+                <pre>
+python manage.py runserver
+                </pre>
+            </div>
+            <p>Visita http://127.0.0.1:8000/ nel browser per vedere la pagina di benvenuto di Django.</p>
+            <h3>Creare una nuova app</h3>
+            <p>Django utilizza il concetto di app. Creiamo una app chiamata 'blog':</p>
+            <div class="code-block">
+                <pre>
+python manage.py startapp blog
+                </pre>
+            </div>
+            <p>Ora abbiamo la base del nostro progetto Django!</p>
+            <a href="models.html" class="next-link">Scopri i Models</a>
+        </section>
+    </main>
+    <footer>
+        <p>&copy; 2025 Sito Educativo su Django</p>
+    </footer>
+</body>
+</html>
